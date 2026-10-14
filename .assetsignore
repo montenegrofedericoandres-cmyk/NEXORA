@@ -1,0 +1,5 @@
+# Deny everything by default, including .git, source files and product files.
+*
+!index.html
+!404.html
+!_headers

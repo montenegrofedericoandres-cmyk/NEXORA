@@ -5,7 +5,7 @@ from check_site import validate
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dist"
-PUBLIC_FILES = {"index.html", "404.html", "_headers"}
+PUBLIC_FILES = {"index.html", "404.html", "_headers", ".assetsignore"}
 
 validate((ROOT / "index.html").read_text(encoding="utf-8"))
 OUTPUT.mkdir(exist_ok=True)
