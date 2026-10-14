@@ -22,4 +22,8 @@ Landing pública en preparación para el Kit de Gestión para Emprendedores.
 No subir tokens, claves de Mercado Pago, contraseñas, datos personales de clientes ni archivos exclusivos para compradores. Un link de pago por sí solo no verifica una transacción para liberar una descarga.
 
 ## Publicación
-El repositorio guarda el código, pero no implica que el sitio esté publicado. Elegir un proveedor de alojamiento que permita comercio electrónico y verificar sus condiciones vigentes.
+Preparado para Cloudflare Pages Free desde `main`, con validación previa y salida estática en `dist/`. La conexión y la URL pública todavía están pendientes.
+
+Configuración y comprobaciones: [docs/CLOUDFLARE_PAGES.md](docs/CLOUDFLARE_PAGES.md).
+
+Las verificaciones de GitHub Actions incluyen pantallas móviles simuladas. Consultar su resultado real en Actions; una configuración preparada no equivale a una publicación confirmada.

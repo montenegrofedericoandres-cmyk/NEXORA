@@ -10,9 +10,19 @@ permissions:
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python scripts/check_site.py
+      - run: python scripts/check_site.py && python scripts/build_site.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser testing tools
+        run: npm install --no-save --package-lock=false playwright@1.62.1
+      - name: Install Chromium for mobile viewport checks
+        run: npx playwright install --with-deps chromium --only-shell
+      - name: Check mobile and desktop layouts
+        run: node scripts/check_mobile.cjs
