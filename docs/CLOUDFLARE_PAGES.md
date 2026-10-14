@@ -1,6 +1,6 @@
 # Publicar NEXORA en Cloudflare Pages (Free)
 
-Estado: repositorio preparado; conexión con Cloudflare y URL pública todavía pendientes.
+Estado: hay una publicación activa en **Cloudflare Workers Static Assets**, en https://nexora.nexoraproductosdigitales.workers.dev/. El proyecto específico de **Cloudflare Pages continúa pendiente**. Las instrucciones de este documento son para Pages, no para el Worker existente.
 
 ## Configuración del proyecto
 | Campo | Valor |
@@ -28,7 +28,7 @@ Estado: repositorio preparado; conexión con Cloudflare y URL pública todavía 
 7. No contratar dominio, R2, Workers Paid ni otro complemento de pago.
 
 ## Qué se publica
-El comando comprueba primero index.html y publica únicamente index.html, 404.html y _headers en dist. No publica la documentación, scripts, paquetes, claves ni archivos de producto. _headers configura controles del navegador y bloquea formularios y scripts en la página estática.
+El comando comprueba primero index.html y prepara index.html, 404.html, _headers y una regla .assetsignore en dist. Los dos últimos archivos configuran las cabeceras y exclusiones; no son descargas de producto. No publica la documentación, scripts, paquetes, claves ni archivos de producto. _headers configura controles del navegador y bloquea formularios y scripts en la página estática.
 
 Las ventas y las entregas permanecen desactivadas. El único contacto habilitado es un enlace mailto; no envía mensajes automáticamente.
 

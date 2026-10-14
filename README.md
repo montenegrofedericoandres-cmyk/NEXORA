@@ -22,8 +22,13 @@ Landing pública en preparación para el Kit de Gestión para Emprendedores.
 No subir tokens, claves de Mercado Pago, contraseñas, datos personales de clientes ni archivos exclusivos para compradores. Un link de pago por sí solo no verifica una transacción para liberar una descarga.
 
 ## Publicación
-Preparado para Cloudflare Pages Free desde `main`, con validación previa y salida estática en `dist/`. La conexión y la URL pública todavía están pendientes.
+Publicación actual en **Cloudflare Workers Static Assets**, conectada a `main`:
+https://nexora.nexoraproductosdigitales.workers.dev/
+
+El despliegue usa `wrangler.jsonc`, ejecuta `python3 scripts/build_site.py` y publica únicamente `dist/`. No ejecuta un backend ni configura bases de datos o servicios de pago. `.assetsignore` excluye por defecto todos los archivos salvo las páginas públicas y sus cabeceras.
+
+**Workers y Pages son productos distintos. Cloudflare Pages sigue pendiente**; las instrucciones para configurarlo se conservan a continuación.
 
 Configuración y comprobaciones: [docs/CLOUDFLARE_PAGES.md](docs/CLOUDFLARE_PAGES.md).
 
-Las verificaciones de GitHub Actions incluyen pantallas móviles simuladas. Consultar su resultado real en Actions; una configuración preparada no equivale a una publicación confirmada.
+GitHub Actions comprueba el paquete, simula seis tamaños de pantalla y valida la URL publicada en `main`, incluidas respuestas 404 para archivos internos y de producto. Consultar el resultado de cada ejecución en Actions. Las pruebas son simuladas y no sustituyen una prueba en un celular físico.

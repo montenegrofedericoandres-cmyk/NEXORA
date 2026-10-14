@@ -30,3 +30,6 @@ jobs:
         env:
           WRANGLER_SEND_METRICS: 'false'
         run: npx --yes wrangler@4.151.0 deploy --dry-run --outdir /tmp/nexora-worker-check
+      - name: Verify the public main deployment
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: node scripts/verify_live.cjs
