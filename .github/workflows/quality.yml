@@ -7,15 +7,22 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: nexora-quality-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify prelaunch rejection cases
+        run: python -m unittest discover -s tests -v
       - run: python scripts/check_site.py && python scripts/build_site.py && python scripts/check_packaging.py
       - uses: actions/setup-node@v4
         with:
