@@ -1,0 +1,27 @@
+name: NEXORA daily health
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nexora-health-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  http-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test the HTTP verifier
+        run: node --test tests/test_live.cjs
+      - name: Check the public deployment
+        run: node scripts/verify_live.cjs --http-only

@@ -1,41 +1,65 @@
 // Check the public deployment without authentication or paid services.
 const assert = require('node:assert/strict');
+const {createHash} = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const {chromium, request} = require('playwright');
 const url = new URL('https://nexora.nexoraproductosdigitales.workers.dev/');
-const expected = fs.readFileSync(path.resolve(__dirname,'../index.html'),'utf8');
 const privatePaths = ['.git/HEAD','.git/config','.github/workflows/quality.yml','.env','README.md','scripts/build_site.py','docs/ARQUITECTURA_AUTOMATIZACION.md','wrangler.jsonc','.assetsignore','producto.xlsx'];
+const securityHeaders = {
+  'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'no-referrer',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()'
+};
+const digest = value => createHash('sha256').update(value).digest('hex');
 
-(async () => {
-  const client = await request.newContext({timeout:15000});
-  let ready = false;
+async function verifyHttp({expectedHtml, baseUrl=url, fetchImpl=globalThis.fetch}) {
+  assert.equal(baseUrl.protocol,'https:','Public deployment must use HTTPS');
+  // One deadline covers the homepage and all private paths in this attempt.
+  const options = {redirect:'manual', signal:AbortSignal.timeout(30000)};
+  const home = await fetchImpl(baseUrl.href,options);
   try {
-    for (let attempt=1; attempt<=12 && !ready; attempt++) {
-      try {
-        const home = await client.get(url.href);
-        assert.equal(home.status(),200,'Public homepage must return 200');
-        assert.equal(await home.text(),expected,'Published page must match main');
-        const headers = home.headers();
-        assert.ok(headers['content-security-policy']?.includes("form-action 'none'"),'Checkout form protection missing');
-        assert.ok(headers['content-security-policy']?.includes("default-src 'none'"),'External script protection missing');
-        assert.equal(headers['x-content-type-options'],'nosniff');
-        assert.equal(headers['x-frame-options'],'DENY');
-        for (const pathname of privatePaths) {
-          const response = await client.get(new URL(pathname,url).href);
-          // Do not print or inspect response bodies for private paths.
-          assert.equal(response.status(),404,'Internal/product path must return 404: '+pathname);
-          await response.dispose();
-        }
-        ready = true;
-        console.log('PASS: HTTPS, published HTML, security headers, and '+privatePaths.length+' blocked internal/product paths');
-      } catch(error) {
-        if(attempt===12) throw error;
-        console.log('Waiting for Cloudflare deployment: attempt '+attempt+'/12; '+error.message.split('\n')[0]);
-        await new Promise(resolve=>setTimeout(resolve,5000));
-      }
+    assert.equal(home.status,200,'Public homepage must return 200');
+    for (const [name,value] of Object.entries(securityHeaders)) {
+      assert.equal(home.headers.get(name),value,'Security header mismatch: '+name);
     }
-  } finally { await client.dispose(); }
+    // Compare hashes so a mismatch never prints the response body in CI logs.
+    assert.equal(digest(await home.text()),digest(expectedHtml),'Published page must match main');
+  } finally {
+    if (!home.bodyUsed) await home.body?.cancel();
+  }
+  for (const pathname of privatePaths) {
+    const response = await fetchImpl(new URL(pathname,baseUrl).href,options);
+    try {
+      assert.equal(response.status,404,'Internal/product path must return 404: '+pathname);
+    } finally {
+      // Never read or print bodies for internal/product paths, even on failure.
+      await response.body?.cancel();
+    }
+  }
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  assert.ok(args.length===0 || (args.length===1 && args[0]==='--http-only'),'Usage: node scripts/verify_live.cjs [--http-only]');
+  const httpOnly = args.includes('--http-only');
+  const expectedHtml = fs.readFileSync(path.resolve(__dirname,'../index.html'),'utf8');
+  const attempts = httpOnly ? 3 : 12;
+  for (let attempt=1; attempt<=attempts; attempt++) {
+    try {
+      await verifyHttp({expectedHtml});
+      console.log('PASS: HTTPS, published HTML, five security headers, and '+privatePaths.length+' blocked internal/product paths');
+      break;
+    } catch(error) {
+      if(attempt===attempts) throw error;
+      console.log('Waiting for Cloudflare deployment: attempt '+attempt+'/'+attempts+'; '+error.message.split('\n')[0]);
+      await new Promise(resolve=>setTimeout(resolve,5000));
+    }
+  }
+  if (httpOnly) return;
+  // The daily HTTP check uses Node alone; browsers are needed only for layout tests.
+  const {chromium} = require('playwright');
   let browser;
   try {
     browser = await chromium.launch({headless:true});
@@ -67,4 +91,7 @@ const privatePaths = ['.git/HEAD','.git/config','.github/workflows/quality.yml',
     }
     console.log('PASS: public deployment at six mobile/tablet/desktop viewports; payments and digital deliveries disabled');
   } finally { await browser?.close(); }
-})().catch(error=>{console.error(error.message);process.exitCode=1;});
+}
+
+module.exports = {verifyHttp};
+if (require.main===module) main().catch(error=>{console.error(error.message);process.exitCode=1;});

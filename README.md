@@ -47,3 +47,14 @@ python scripts/check_packaging.py
 ```
 
 GitHub Actions ejecuta estos controles en los cambios y revisiones. En `main` comprueba además la web pública y mantiene la revisión semanal existente. El checkout no guarda credenciales en la copia del repositorio, y una nueva ejecución reemplaza las comprobaciones antiguas de la misma rama.
+
+## Revisión diaria de la web publicada
+El flujo **NEXORA daily health** está programado todos los días a las **09:00 de Argentina (12:00 UTC)** y también se ejecuta al actualizar `main`. Comprueba HTTPS, que el HTML coincida con el repositorio, las cinco cabeceras de seguridad y diez rutas internas o de producto que deben devolver 404. Un fallo queda visible en la pestaña Actions; GitHub puede demorar las ejecuciones programadas.
+
+Este control usa únicamente Node 22, sin instalar navegadores, sin credenciales de Cloudflare y sin desplegar contenido. Ambos flujos usan runners estándar de GitHub Actions, gratuitos para este repositorio público. Las pruebas completas de seis tamaños de pantalla se mantienen en cada cambio y en la revisión semanal.
+
+Para probar el verificador y ejecutar sólo la revisión HTTP:
+```sh
+node --test tests/test_live.cjs
+node scripts/verify_live.cjs --http-only
+```
